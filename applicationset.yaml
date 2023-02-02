@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: nginx
+  namespace: argocd  
+spec:
+  generators:
+  - list: 
+      # Parameters are generated based on this cluster list, to be substituted
+      # into the template below.
+      elements:
+      # - cluster: kubernetes-service
+      #   url: https://kubernetes.default.svc  
+      - cluster: k3d-aadiclus
+        url: https://172.18.0.4:6443
+      - cluster: eks
+        url: https://2122AFDCD567B99B9AFFD5AADBE30988.gr7.us-east-1.eks.amazonaws.com 
+
+  template: 
+    # An Argo CD Application template, with support for parameter substitution 
+    # with values from parameters generated above.
+    metadata:
+      name: '{{cluster}}-nginx'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/aadi308/argocd-example.git
+        targetRevision: HEAD
+        path: dev
+      destination:
+        server: '{{url}}'
+        namespace: myapp
+      syncPolicy:
+        syncOptions:
+        - CreateNamespace=true
+
+        automated:
+          selfHeal: true
+          prune: true
